@@ -4,7 +4,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend,
 } from 'recharts';
-import { Award, TrendingUp, CheckCircle, Wallet, Target } from 'lucide-react';
+import { AcademicIcons, FinanceIcons, StatusIcons } from '../../lib/icons';
 import KPICard from '../../components/ui/KPICard';
 import { KPICardSkeleton, ChartSkeleton } from '../../components/ui/Skeleton';
 import { useStudentData } from './hooks/useStudentData';

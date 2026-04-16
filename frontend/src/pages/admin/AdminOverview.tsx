@@ -4,8 +4,8 @@ import {
   PieChart, Pie, Cell, Tooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer,
 } from 'recharts';
-import { Users, GraduationCap, BookOpen, DollarSign, TrendingUp } from 'lucide-react';
-import api from '../../lib/api'; // Utilisation d'Axios
+import api from '../../lib/api';
+import { FinanceIcons, AcademicIcons, StatusIcons } from '../../lib/icons';
 import KPICard from '../../components/ui/KPICard';
 import { KPICardSkeleton, ChartSkeleton } from '../../components/ui/Skeleton';
 
@@ -57,13 +57,13 @@ export default function AdminOverview() {
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         {loading ? Array.from({ length: 4 }).map((_, i) => <KPICardSkeleton key={i} />) : (
           <>
-            <KPICard title="Utilisateurs" value={stats?.total_users ?? 0} icon={<Users size={16} />} color="sky" delay={0} />
-            <KPICard title="Étudiants" value={stats?.total_students ?? 0} icon={<GraduationCap size={16} />} color="emerald" delay={0.1} />
-            <KPICard title="Enseignants" value={stats?.total_teachers ?? 0} icon={<BookOpen size={16} />} color="amber" delay={0.2} />
+            <KPICard title="Utilisateurs" value={stats?.total_users ?? 0} icon={AcademicIcons.subject} color="sky" delay={0} />
+            <KPICard title="Étudiants" value={stats?.total_students ?? 0} icon={AcademicIcons.science} color="emerald" delay={0.1} />
+            <KPICard title="Enseignants" value={stats?.total_teachers ?? 0} icon={AcademicIcons.language} color="amber" delay={0.2} />
             <KPICard 
               title="Recouvrement" 
               value={`${recouvrement}%`} 
-              icon={<DollarSign size={16} />} 
+              icon={FinanceIcons.money} 
               color={recouvrement >= 80 ? 'emerald' : 'rose'} 
               delay={0.3} 
               subtitle={`${Math.round(stats?.total_paye ?? 0).toLocaleString('fr-FR')} FCFA`} 
@@ -92,18 +92,20 @@ export default function AdminOverview() {
                   <h3 className="font-bold text-gray-900 dark:text-white text-sm uppercase tracking-wider">Santé Financière</h3>
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Répartition des encaissements</p>
                 </div>
-                <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"><TrendingUp size={14} className="text-gray-400" /></div>
+                <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">{StatusIcons.up}</div>
               </div>
-              
+
               <ResponsiveContainer width="100%" height={240}>
                 <PieChart>
                   <Pie data={financePieData} cx="50%" cy="50%" outerRadius={85} innerRadius={60} paddingAngle={8} dataKey="value">
-                    {financePieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} strokeWidth={0} />)}
+                    {financePieData.map((_, i) => (
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} strokeWidth={0} />
+                    ))}
                   </Pie>
-                <Tooltip 
-                  formatter={(value: any) => [`${Number(value).toLocaleString('fr-FR')} FCFA`, 'Montant']} 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '12px', fontWeight: 'bold' }} 
-                />
+                  <Tooltip
+                    formatter={(value: any) => [`${Number(value).toLocaleString('fr-FR')} FCFA`, 'Montant']}
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '12px', fontWeight: 'bold' }}
+                  />
                   <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', paddingTop: '20px' }} />
                 </PieChart>
               </ResponsiveContainer>

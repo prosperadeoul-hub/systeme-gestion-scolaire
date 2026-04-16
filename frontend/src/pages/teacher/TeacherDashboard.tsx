@@ -3,9 +3,9 @@ import { motion } from 'framer-motion';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
-import { BookOpen, Users, TrendingUp, ClipboardList, AlertCircle } from 'lucide-react';
-import api from '../../lib/api'; // Import de mon instance Axios
+import api from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
+import { AcademicIcons, FinanceIcons } from '../../lib/icons';
 import KPICard from '../../components/ui/KPICard';
 import { KPICardSkeleton, ChartSkeleton } from '../../components/ui/Skeleton';
 

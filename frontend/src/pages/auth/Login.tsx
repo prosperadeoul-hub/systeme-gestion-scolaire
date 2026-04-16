@@ -1,31 +1,29 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { School, User as UserIcon, Lock, Eye, EyeOff, Loader, Database } from 'lucide-react'; // Changé Mail par UserIcon
+import { LogOut, Eye, EyeOff, Loader, Database } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/ui/Toast';
+import { NavIcons, AuthIcons, ActionIcons, OrganizationIcons } from '../../lib/icons';
 
 export default function Login() {
   const { signIn, seedDemoData } = useAuth();
   const { showToast } = useToast();
   
-  // Dans Django, on utilise souvent le 'username' pour le login
   const [username, setUsername] = useState(''); 
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [seeding, setSeeding] = useState(false);
 
-  // Mise à jour des comptes démo avec les usernames du script Django
   const demoAccounts = [
-    { label: 'Admin', user: 'admin_demo', pass: 'Demo123!', color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800' },
-    { label: 'Enseignant', user: 'prof_dupont', pass: 'Demo123!', color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800' },
-    { label: 'Étudiant', user: 'alice_etu', pass: 'Demo123!', color: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-200 dark:border-sky-800' },
+    { label: 'Admin', user: 'admin_demo', pass: 'Demo123!', icon: '👤', role: 'admin' },
+    { label: 'Enseignant', user: 'prof_dupont', pass: 'Demo123!', icon: '👨‍🏫', role: 'teacher' },
+    { label: 'Étudiant', user: 'alice_etu', pass: 'Demo123!', icon: '👨‍🎓', role: 'student' },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // On passe le username à la place de l'email
     const { error } = await signIn(username, password);
     setLoading(false);
     
@@ -54,116 +52,204 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
-      {/* Section Gauche : Identité visuelle (Senior Enterprise) */}
-      <div className="hidden lg:flex flex-col flex-1 bg-gradient-to-br from-sky-600 to-sky-800 p-12 justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-            <School size={20} className="text-white" />
-          </div>
-          <span className="text-white font-bold text-xl">EduManager</span>
-        </div>
-
-        <div>
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-4xl font-bold text-white mb-4 leading-tight"
+    <div className="auth-container">
+      {/* Sidebar Gauche - Branding */}
+      <aside className="auth-sidebar auth-sidebar--visible">
+        <div className="auth-sidebar__header">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.1 }}
+            className="auth-sidebar__logo"
           >
+            {NavIcons.school}
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <span className="auth-sidebar__title">EduManager</span>
+          </motion.div>
+        </div>
+
+        <motion.div 
+          className="auth-sidebar__content"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <h2 className="auth-sidebar__heading">
             Maîtrisez votre<br />écosystème<br />éducatif.
-          </motion.h2>
-          <p className="text-sky-200 text-lg">Solution Master 1 IA : Pilotage par les données et interface haute fidélité.</p>
-        </div>
+          </h2>
+          <p className="auth-sidebar__description">
+            Solution Master 1 IA : Pilotage par les données et interface haute fidélité.
+          </p>
+        </motion.div>
 
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            { number: '50', label: 'Étudiants Test' },
-            { number: '1000+', label: 'Notes MySQL' },
-            { number: 'Django', label: 'Backend' },
-          ].map(stat => (
-            <div key={stat.label} className="bg-white/10 rounded-xl p-4 text-center">
-              <p className="text-2xl font-bold text-white">{stat.number}</p>
-              <p className="text-sky-200 text-sm">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+        <motion.div 
+          className="auth-sidebar__stats"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <div className="auth-stat">
+            <div className="auth-stat__value">50</div>
+            <div className="auth-stat__label">Étudiants Test</div>
+          </div>
+          <div className="auth-stat">
+            <div className="auth-stat__value">1000+</div>
+            <div className="auth-stat__label">Notes MySQL</div>
+          </div>
+          <div className="auth-stat">
+            <div className="auth-stat__value">Django</div>
+            <div className="auth-stat__label">Backend</div>
+          </div>
+        </motion.div>
+      </aside>
 
-      {/* Section Droite : Formulaire */}
-      <div className="flex-1 lg:max-w-md flex flex-col items-center justify-center p-8">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Authentification</h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mb-8">Base de données MySQL locale</p>
+      {/* Section Formulaire Droite */}
+      <section className="auth-form-section">
+        <motion.div 
+          className="auth-form-wrapper"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="auth-form__header">
+            <h1 className="auth-form__title">Authentification</h1>
+            <p className="auth-form__subtitle">Base de données MySQL locale</p>
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4 mb-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nom d'utilisateur</label>
-              <div className="relative">
-                <UserIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <form className="auth-form" onSubmit={handleSubmit}>
+            {/* Champ Nom d'utilisateur */}
+            <div className="auth-form__group">
+              <label className="auth-form__label auth-form__label--required">
+                Nom d'utilisateur
+              </label>
+              <div className="auth-form__input-wrapper">
+                {AuthIcons.user}
                 <input
                   type="text"
-                  value={username}
-                  onChange={e => setUsername(e.target.value)}
+                  className="auth-form__input"
+                  style={{ paddingLeft: '36px' }}
                   placeholder="ex: admin_demo"
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-sky-500 outline-none transition"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   required
                 />
               </div>
+              <span className="auth-form__hint">Utilisateur Django</span>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Mot de passe</label>
-              <div className="relative">
-                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            {/* Champ Mot de passe */}
+            <div className="auth-form__group">
+              <label className="auth-form__label auth-form__label--required">
+                Mot de passe
+              </label>
+              <div className="auth-form__input-wrapper">
+                {AuthIcons.lock}
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  className="auth-form__input"
+                  style={{ paddingLeft: '36px' }}
                   placeholder="••••••••"
-                  className="w-full pl-9 pr-10 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-sky-500 outline-none transition"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                <button
+                  type="button"
+                  className="auth-form__toggle-password"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
 
+            {/* Bouton Se connecter */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 disabled:bg-sky-400 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+              className="auth-form__submit"
             >
-              {loading ? <Loader size={15} className="animate-spin" /> : 'Se connecter'}
+              {loading ? (
+                <>
+                  <Loader size={16} className="animate-spin" />
+                  Connexion...
+                </>
+              ) : (
+                'Se connecter'
+              )}
             </button>
           </form>
 
-          {/* Aide au test (Pratique pour ton projet) */}
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Accès rapide (Démo)</p>
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              {demoAccounts.map(acc => (
-                <button
-                  key={acc.user}
-                  onClick={() => handleDemoLogin(acc.user, acc.pass)}
-                  className={`py-2 px-1 rounded-lg border text-[10px] font-medium transition-transform active:scale-95 ${acc.color}`}
+          {/* Section Comptes Démo */}
+          <div className="auth-demo">
+            <div className="auth-demo__divider">
+              <div className="auth-demo__divider-line"></div>
+              <span className="auth-demo__divider-text">Accès rapide (Démo)</span>
+              <div className="auth-demo__divider-line"></div>
+            </div>
+
+            <div className="auth-demo__accounts">
+              {demoAccounts.map((account) => (
+                <motion.button
+                  key={account.user}
+                  type="button"
+                  className="auth-demo__account"
+                  onClick={() => handleDemoLogin(account.user, account.pass)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  {acc.label}
-                </button>
+                  <div className="auth-demo__account-header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '20px' }}>{account.icon}</span>
+                      <span className="auth-demo__account-label">{account.label}</span>
+                    </div>
+                    <span className={`auth-demo__account-badge auth-demo__account-badge--${account.role}`}>
+                      {account.label}
+                    </span>
+                  </div>
+                  <div className="auth-demo__account-credentials">
+                    <div className="auth-demo__account-credentials-item">
+                      <span className="auth-demo__account-credentials-label">User:</span>
+                      <span>{account.user}</span>
+                    </div>
+                    <div className="auth-demo__account-credentials-item">
+                      <span className="auth-demo__account-credentials-label">Pass:</span>
+                      <span>{account.pass}</span>
+                    </div>
+                  </div>
+                </motion.button>
               ))}
             </div>
-            
-            <button
+
+            {/* Bouton Initialiser */}
+            <motion.button
+              type="button"
+              className="auth-seed-button"
               onClick={handleSeedDemo}
               disabled={seeding}
-              className="w-full py-2 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl text-xs text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
             >
-              {seeding ? <Loader size={12} className="animate-spin" /> : <Database size={12} />}
-              Initialiser MySQL
-            </button>
+              {seeding ? (
+                <>
+                  <Loader size={14} className="animate-spin" />
+                  Initialisation...
+                </>
+              ) : (
+                <>
+                  {OrganizationIcons.refresh}
+                  Initialiser la base MySQL
+                </>
+              )}
+            </motion.button>
           </div>
         </motion.div>
-      </div>
+      </section>
     </div>
   );
 }
