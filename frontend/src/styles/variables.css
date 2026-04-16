@@ -1,0 +1,26 @@
+/* src/styles/variables.css */
+:root {
+  /* Palette Entreprise */
+  --primary: #002D5E;    /* Deep Blue */
+  --accent: #FFB800;     /* Amber */
+  --text-main: #1A1A1A;
+  --text-muted: #666666;
+  --bg-app: #F8FAFC;
+  --white: #FFFFFF;
+  
+  /* Borders & Shadows */
+  --radius-xl: 16px;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+  --border-color: #E2E8F0;
+}
+
+/* Dark Mode (Automatique) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-app: #0F172A;
+    --white: #1E293B;
+    --text-main: #F8FAFC;
+    --text-muted: #94A3B8;
+    --border-color: #334155;
+  }
+}

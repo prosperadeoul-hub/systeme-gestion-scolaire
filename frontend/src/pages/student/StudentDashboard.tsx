@@ -4,26 +4,33 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend,
 } from 'recharts';
-import { Award, TrendingUp, CheckCircle, Wallet } from 'lucide-react';
+import { Award, TrendingUp, CheckCircle, Wallet, Target } from 'lucide-react';
 import KPICard from '../../components/ui/KPICard';
 import { KPICardSkeleton, ChartSkeleton } from '../../components/ui/Skeleton';
 import { useStudentData } from './hooks/useStudentData';
-import type { Note } from '../../lib/types';
+import type { Note, Categorie } from '../../lib/types';
 
-const CATEGORIE_LABELS: Record<string, string> = {
-  TECH: 'Technique', SOFT: 'Soft Skills', LANG: 'Langues', SCIE: 'Sciences',
+const CATEGORIE_LABELS: Record<Categorie, string> = {
+  TECH: 'Technique', SOFT: 'Savoir-être', LANG: 'Langues', SCIE: 'Sciences',
+};
+
+const CATEGORIE_COLORS: Record<Categorie, string> = {
+  TECH: 'bg-sky-50 text-sky-600 border-sky-100 dark:bg-sky-900/20 dark:text-sky-400 dark:border-sky-800/50',
+  SOFT: 'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800/50',
+  LANG: 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800/50',
+  SCIE: 'bg-violet-50 text-violet-600 border-violet-100 dark:bg-violet-900/20 dark:text-violet-400 dark:border-violet-800/50',
 };
 
 function buildRadarData(notes: Note[]) {
   const categories: Record<string, number[]> = {};
   for (const note of notes) {
-    const cat = (note.examen as { matiere?: { categorie?: string } })?.matiere?.categorie;
+    const cat = note.examen?.matiere?.categorie;
     if (!cat) continue;
     if (!categories[cat]) categories[cat] = [];
     categories[cat].push(note.valeur);
   }
   return Object.entries(categories).map(([cat, vals]) => ({
-    subject: CATEGORIE_LABELS[cat] ?? cat,
+    subject: CATEGORIE_LABELS[cat as Categorie] ?? cat,
     value: Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10,
     fullMark: 20,
   }));
@@ -32,7 +39,7 @@ function buildRadarData(notes: Note[]) {
 function buildAreaData(notes: Note[]) {
   const sorted = [...notes].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   return sorted.map((note, i) => ({
-    name: (note.examen as { nom?: string })?.nom?.slice(0, 15) ?? `Note ${i + 1}`,
+    name: note.examen?.nom?.slice(0, 15) ?? `Note ${i + 1}`,
     note: note.valeur,
   }));
 }
@@ -48,67 +55,79 @@ export default function StudentDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* KPI Section */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => <KPICardSkeleton key={i} />)
         ) : (
           <>
-            <KPICard title="Moyenne Générale" value={`${moyenneGenerale}/20`} icon={<Award size={16} />} color={gradeColor} delay={0} subtitle="Pondérée par coefficient" />
-            <KPICard title="Rang dans la Promo" value={`${rang}e/${totalEtudiants}`} icon={<TrendingUp size={16} />} color="sky" delay={0.1} subtitle="Classement actuel" />
-            <KPICard title="Taux de Réussite" value={`${tauxReussite}%`} icon={<CheckCircle size={16} />} color="emerald" delay={0.2} subtitle="Notes ≥ 10/20" />
-            <KPICard title="Solde à Régler" value={`${soldeRestant.toLocaleString('fr-FR')} €`} icon={<Wallet size={16} />} color={soldeRestant > 0 ? 'rose' : 'emerald'} delay={0.3} subtitle={`Sur ${etudiant?.frais_scolarite_total?.toLocaleString('fr-FR')} € total`} />
+            <KPICard title="Moyenne" value={`${moyenneGenerale}/20`} icon={<Award size={16} />} color={gradeColor} delay={0} subtitle="Score global" />
+            <KPICard title="Classement" value={`${rang}e / ${totalEtudiants}`} icon={<TrendingUp size={16} />} color="sky" delay={0.1} subtitle="Position actuelle" />
+            <KPICard title="Succès" value={`${tauxReussite}%`} icon={<CheckCircle size={16} />} color="emerald" delay={0.2} subtitle="Moyennes validées" />
+            <KPICard 
+                title="Solde" 
+                value={`${soldeRestant.toLocaleString('fr-FR')} FCFA`} 
+                icon={<Wallet size={16} />} 
+                color={soldeRestant > 0 ? 'rose' : 'emerald'} 
+                delay={0.3} 
+                subtitle={`Reste à payer`} 
+            />
           </>
         )}
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {loading ? (
-          <>
-            <ChartSkeleton />
-            <ChartSkeleton />
-          </>
+          <><ChartSkeleton /><ChartSkeleton /></>
         ) : (
           <>
+            {/* Radar Chart - Skills Balance */}
             <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6"
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+              className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 p-8 shadow-sm"
             >
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Équilibre des Compétences</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-5">Moyenne par catégorie de matière</p>
-              <ResponsiveContainer width="100%" height={240}>
+              <div className="flex items-center gap-2 mb-6">
+                <Target size={16} className="text-sky-500" />
+                <h3 className="text-xs font-black uppercase tracking-widest text-gray-400">Équilibre Académique</h3>
+              </div>
+              <ResponsiveContainer width="100%" height={260}>
                 <RadarChart data={radarData}>
-                  <PolarGrid stroke="#e5e7eb" />
-                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#6b7280' }} />
-                  <Radar name="Notes" dataKey="value" stroke="#0ea5e9" fill="#0ea5e9" fillOpacity={0.25} strokeWidth={2} dot={{ r: 4, fill: '#0ea5e9' }} />
-                  <Tooltip formatter={(v: number) => [`${v}/20`, 'Moyenne']} contentStyle={{ backgroundColor: 'var(--tooltip-bg, #fff)', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px' }} />
+                  <PolarGrid stroke="#f1f5f9" />
+                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} />
+                  <Radar name="Performance" dataKey="value" stroke="#0ea5e9" fill="#0ea5e9" fillOpacity={0.15} strokeWidth={3} dot={{ r: 4, fill: '#0ea5e9', strokeWidth: 2, stroke: '#fff' }} />
+                  <Tooltip 
+                    formatter={(v: any) => [`${v}/20`, 'Moyenne']} 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '11px', fontWeight: 'bold' }} 
+                  />
                 </RadarChart>
               </ResponsiveContainer>
             </motion.div>
 
+            {/* Area Chart - Progression */}
             <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6"
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+              className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 p-8 shadow-sm"
             >
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Évolution des Notes</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-5">Progression chronologique</p>
-              <ResponsiveContainer width="100%" height={240}>
-                <AreaChart data={areaData}>
+              <div className="flex items-center gap-2 mb-6">
+                <TrendingUp size={16} className="text-emerald-500" />
+                <h3 className="text-xs font-black uppercase tracking-widest text-gray-400">Progression Continue</h3>
+              </div>
+              <ResponsiveContainer width="100%" height={260}>
+                <AreaChart data={areaData} margin={{ left: -25 }}>
                   <defs>
                     <linearGradient id="colorNote" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.15} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#9ca3af' }} />
-                  <YAxis domain={[0, 20]} tick={{ fontSize: 10, fill: '#9ca3af' }} />
-                  <Tooltip formatter={(v: number) => [`${v}/20`, 'Note']} contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px' }} />
-                  <Area type="monotone" dataKey="note" stroke="#0ea5e9" strokeWidth={2.5} fill="url(#colorNote)" activeDot={{ r: 5 }} />
-                  <Legend wrapperStyle={{ fontSize: '11px' }} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" tick={{ fontSize: 9, fontWeight: 'bold', fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <YAxis domain={[0, 20]} tick={{ fontSize: 9, fontWeight: 'bold', fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <Tooltip 
+                    formatter={(v: any) => [`${v}/20`, 'Résultat']} 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '11px', fontWeight: 'bold' }} 
+                  />
+                  <Area type="monotone" dataKey="note" stroke="#10b981" strokeWidth={3} fill="url(#colorNote)" activeDot={{ r: 6, strokeWidth: 0 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </motion.div>
@@ -116,53 +135,55 @@ export default function StudentDashboard() {
         )}
       </div>
 
+      {/* Grade Details Table */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6"
+        initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
+        className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm"
       >
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Détail des Notes</h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Résultats par examen</p>
+        <div className="px-8 py-5 border-b border-gray-50 dark:border-gray-800">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Détails des Évaluations</h3>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Historique des 10 dernières notes</p>
+        </div>
+
         {loading ? (
-          <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-12 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />)}</div>
+          <div className="p-8 space-y-4">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-14 bg-gray-50 dark:bg-gray-800 rounded-2xl animate-pulse" />)}</div>
+        ) : notes.length === 0 ? (
+          <div className="p-20 text-center text-gray-400 text-sm font-medium italic">Aucun relevé disponible.</div>
         ) : (
-          <div className="divide-y divide-gray-100 dark:divide-gray-800">
-            {notes.length === 0 ? (
-              <p className="text-center py-8 text-gray-400 text-sm">Aucune note disponible pour le moment.</p>
-            ) : (
-              notes.slice(0, 10).map(note => {
-                const examNom = (note.examen as { nom?: string })?.nom ?? 'Examen';
-                const matiereNom = (note.examen as { matiere?: { nom?: string } })?.matiere?.nom ?? '';
-                const cat = (note.examen as { matiere?: { categorie?: string } })?.matiere?.categorie ?? '';
-                const catColors: Record<string, string> = {
-                  TECH: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400',
-                  SOFT: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-                  LANG: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-                  SCIE: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
-                };
-                const gradeClass = note.valeur >= 14 ? 'text-emerald-600 dark:text-emerald-400' : note.valeur >= 10 ? 'text-sky-600 dark:text-sky-400' : 'text-rose-600 dark:text-rose-400';
-                return (
-                  <div key={note.id} className="flex items-center justify-between py-3">
-                    <div className="flex items-center gap-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${catColors[cat] ?? 'bg-gray-100 text-gray-600'}`}>
-                        {cat}
-                      </span>
-                      <div>
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{examNom}</p>
-                        <p className="text-xs text-gray-400">{matiereNom}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-24 h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full ${note.valeur >= 10 ? 'bg-sky-400' : 'bg-rose-400'}`} style={{ width: `${(note.valeur / 20) * 100}%` }} />
-                      </div>
-                      <span className={`text-sm font-bold w-12 text-right ${gradeClass}`}>{note.valeur}/20</span>
+          <div className="divide-y divide-gray-50 dark:divide-gray-800/50">
+            {notes.slice(0, 10).map(note => {
+              const examNom = note.examen?.nom ?? 'Examen Standard';
+              const matiereNom = note.examen?.matiere?.nom ?? 'Matière';
+              const cat = note.examen?.matiere?.categorie ?? 'TECH';
+              const statusColor = note.valeur >= 14 ? 'text-emerald-600' : note.valeur >= 10 ? 'text-sky-600' : 'text-rose-600';
+              
+              return (
+                <div key={note.id} className="flex items-center justify-between px-8 py-4 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <span className={`text-[10px] px-2 py-1 rounded-lg font-black uppercase tracking-tighter border ${CATEGORIE_COLORS[cat as Categorie]}`}>
+                      {cat}
+                    </span>
+                    <div>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white leading-none mb-1">{examNom}</p>
+                      <p className="text-[11px] font-medium text-gray-400">{matiereNom}</p>
                     </div>
                   </div>
-                );
-              })
-            )}
+                  
+                  <div className="flex items-center gap-6">
+                    <div className="hidden sm:block w-32 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(note.valeur / 20) * 100}%` }}
+                        className={`h-full rounded-full ${note.valeur >= 10 ? 'bg-sky-400' : 'bg-rose-400'}`} 
+                      />
+                    </div>
+                    <span className={`text-sm font-black tabular-nums w-12 text-right ${statusColor}`}>
+                        {note.valeur.toFixed(1)}/20
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </motion.div>

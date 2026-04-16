@@ -7,6 +7,7 @@ export interface Profile {
   full_name: string;
   email: string;
   created_at: string;
+  avatar_url?: string;
 }
 
 export interface Promotion {
@@ -14,12 +15,16 @@ export interface Promotion {
   nom: string;
   annee: number;
   created_at: string;
+  // Ajout des compteurs pour PromotionManagement.tsx
+  student_count?: number;
+  matiere_count?: number;
 }
 
 export interface Professeur {
   id: string;
   user_id: string;
   specialite: string;
+  full_name?: string;
   profile?: Profile;
 }
 
@@ -40,8 +45,10 @@ export interface Matiere {
   code: string;
   coefficient: number;
   categorie: Categorie;
+  promotion_ids: string[]; // Utilisé pour le multi-select côté client
   professeur_id: string | null;
   professeur?: Professeur;
+  professeur_nom?: string; // Champ calculé par Django (annotate) pour MatieresManagement.tsx
 }
 
 export interface Examen {
@@ -49,6 +56,7 @@ export interface Examen {
   nom: string;
   matiere_id: string;
   date_examen: string;
+  coefficient?: number; // Souvent différent du coeff de la matière
   matiere?: Matiere;
 }
 
@@ -56,7 +64,7 @@ export interface Note {
   id: string;
   etudiant_id: string;
   examen_id: string;
-  valeur: number;
+  valeur: number; // Sur 20
   commentaire: string;
   created_at: string;
   examen?: Examen;
@@ -73,7 +81,9 @@ export type Page =
   | 'dashboard'
   | 'programme'
   | 'notes-saisie'
+  | 'bulletins'     
   | 'admin-overview'
   | 'admin-users'
   | 'admin-promotions'
-  | 'admin-matieres';
+  | 'admin-matieres'
+  | 'admin-scolarite';
